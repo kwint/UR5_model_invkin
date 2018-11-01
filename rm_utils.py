@@ -46,10 +46,13 @@ def kin_planar_inverse(arms,point,elbow_down=True):
     r = (x**2 + y**2)**0.5
     s = z - d1
     c = (r**2 + s**2)**0.5
+    D = (r**2 + s**2 - d2**2 - d3**2) / (2*d2*d3)
 
-    theta[1] = np.arctan2(s, r) - np.arccos((c**2 + -1*d3**2 + d2**2) / (2*d2*c))
-    theta[2] = np.arccos((-c**2 + d3**2 + d2**2) / (2*d3**2*d2))
+    # theta[1] = np.arctan2(s, r) - np.arctan2(d3*s, d2+d3*s)
+    # theta[2] = np.arctan2((1-D**2)**0.5, D)
 
+    theta[1] = np.arctan2(s, r) - np.arctan2((-d3**2+d2**2+c**2),(2*d3*d2))
+    theta[2] = np.pi - np.arctan2((-c**2+d3**2+d2**2),(2*d3*d2))
     return theta
 
 # cylinder is a convenience function to create a cylinder shape in

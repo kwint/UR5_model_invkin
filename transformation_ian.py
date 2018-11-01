@@ -1,10 +1,8 @@
-
-
 # -*- coding: utf-8 -*-
 # transformations.py
 
-# Copyright (c) 2006-2018, Christoph Gohlke
-# Copyright (c) 2006-2018, The Regents of the University of California
+# Copyright (c) 2006-2015, Christoph Gohlke
+# Copyright (c) 2006-2015, The Regents of the University of California
 # Produced at the Laboratory for Fluorescence Dynamics
 # All rights reserved.
 #
@@ -41,18 +39,18 @@ Euler angles, and quaternions. Also includes an Arcball control object and
 functions to decompose transformation matrices.
 
 :Author:
-  `Christoph Gohlke <https://www.lfd.uci.edu/~gohlke/>`_
+  `Christoph Gohlke <http://www.lfd.uci.edu/~gohlke/>`_
 
 :Organization:
   Laboratory for Fluorescence Dynamics, University of California, Irvine
 
-:Version: 2018.02.08
+:Version: 2015.07.18
 
 Requirements
 ------------
-* `CPython 2.7 or 3.6 <http://www.python.org>`_
-* `Numpy 1.13 <http://www.numpy.org>`_
-* `Transformations.c 2018.02.08 <https://www.lfd.uci.edu/~gohlke/>`_
+* `CPython 2.7 or 3.4 <http://www.python.org>`_
+* `Numpy 1.9 <http://www.numpy.org>`_
+* `Transformations.c 2015.07.18 <http://www.lfd.uci.edu/~gohlke/>`_
   (recommended for speedup of some functions)
 
 Notes
@@ -201,7 +199,7 @@ import math
 
 import numpy
 
-__version__ = '2018.02.08'
+__version__ = '2015.07.18'
 __docformat__ = 'restructuredtext en'
 __all__ = ()
 
@@ -289,13 +287,13 @@ def reflection_from_matrix(matrix):
     w, V = numpy.linalg.eig(M[:3, :3])
     i = numpy.where(abs(numpy.real(w) + 1.0) < 1e-8)[0]
     if not len(i):
-        raise ValueError('no unit eigenvector corresponding to eigenvalue -1')
+        raise ValueError("no unit eigenvector corresponding to eigenvalue -1")
     normal = numpy.real(V[:, i[0]]).squeeze()
     # point: any unit eigenvector corresponding to eigenvalue 1
     w, V = numpy.linalg.eig(M)
     i = numpy.where(abs(numpy.real(w) - 1.0) < 1e-8)[0]
     if not len(i):
-        raise ValueError('no unit eigenvector corresponding to eigenvalue 1')
+        raise ValueError("no unit eigenvector corresponding to eigenvalue 1")
     point = numpy.real(V[:, i[-1]]).squeeze()
     point /= point[3]
     return point, normal
@@ -333,8 +331,8 @@ def rotation_matrix(angle, direction, point=None):
     R = numpy.diag([cosa, cosa, cosa])
     R += numpy.outer(direction, direction) * (1.0 - cosa)
     direction *= sina
-    R += numpy.array([[ 0.0,         -direction[2],  direction[1]],
-                      [ direction[2], 0.0,          -direction[0]],
+    R += numpy.array([[0.0,         -direction[2],  direction[1]],
+                      [direction[2], 0.0,          -direction[0]],
                       [-direction[1], direction[0],  0.0]])
     M = numpy.identity(4)
     M[:3, :3] = R
@@ -364,13 +362,13 @@ def rotation_from_matrix(matrix):
     w, W = numpy.linalg.eig(R33.T)
     i = numpy.where(abs(numpy.real(w) - 1.0) < 1e-8)[0]
     if not len(i):
-        raise ValueError('no unit eigenvector corresponding to eigenvalue 1')
+        raise ValueError("no unit eigenvector corresponding to eigenvalue 1")
     direction = numpy.real(W[:, i[-1]]).squeeze()
     # point: unit eigenvector of R33 corresponding to eigenvalue of 1
     w, Q = numpy.linalg.eig(R)
     i = numpy.where(abs(numpy.real(w) - 1.0) < 1e-8)[0]
     if not len(i):
-        raise ValueError('no unit eigenvector corresponding to eigenvalue 1')
+        raise ValueError("no unit eigenvector corresponding to eigenvalue 1")
     point = numpy.real(Q[:, i[-1]]).squeeze()
     point /= point[3]
     # rotation angle depending on direction
@@ -454,7 +452,7 @@ def scale_from_matrix(matrix):
     w, V = numpy.linalg.eig(M)
     i = numpy.where(abs(numpy.real(w) - 1.0) < 1e-8)[0]
     if not len(i):
-        raise ValueError('no eigenvector corresponding to eigenvalue 1')
+        raise ValueError("no eigenvector corresponding to eigenvalue 1")
     origin = numpy.real(V[:, i[-1]]).squeeze()
     origin /= origin[3]
     return factor, origin, direction
@@ -566,7 +564,7 @@ def projection_from_matrix(matrix, pseudo=False):
         w, V = numpy.linalg.eig(M33)
         i = numpy.where(abs(numpy.real(w)) < 1e-8)[0]
         if not len(i):
-            raise ValueError('no eigenvector corresponding to eigenvalue 0')
+            raise ValueError("no eigenvector corresponding to eigenvalue 0")
         direction = numpy.real(V[:, i[0]]).squeeze()
         direction /= vector_norm(direction)
         # normal: unit eigenvector of M33.T corresponding to eigenvalue 0
@@ -585,7 +583,7 @@ def projection_from_matrix(matrix, pseudo=False):
         i = numpy.where(abs(numpy.real(w)) > 1e-8)[0]
         if not len(i):
             raise ValueError(
-                'no eigenvector not corresponding to eigenvalue 0')
+                "no eigenvector not corresponding to eigenvalue 0")
         point = numpy.real(V[:, i[-1]]).squeeze()
         point /= point[3]
         normal = - M[3, :3]
@@ -630,10 +628,10 @@ def clip_matrix(left, right, bottom, top, near, far, perspective=False):
 
     """
     if left >= right or bottom >= top or near >= far:
-        raise ValueError('invalid frustum')
+        raise ValueError("invalid frustum")
     if perspective:
         if near <= _EPS:
-            raise ValueError('invalid frustum: near <= 0')
+            raise ValueError("invalid frustum: near <= 0")
         t = 2.0 * near
         M = [[t/(left-right), 0.0, (right+left)/(right-left), 0.0],
              [0.0, t/(bottom-top), (top+bottom)/(top-bottom), 0.0],
@@ -670,7 +668,7 @@ def shear_matrix(angle, direction, point, normal):
     normal = unit_vector(normal[:3])
     direction = unit_vector(direction[:3])
     if abs(numpy.dot(normal, direction)) > 1e-6:
-        raise ValueError('direction and normal vectors are not orthogonal')
+        raise ValueError("direction and normal vectors are not orthogonal")
     angle = math.tan(angle)
     M = numpy.identity(4)
     M[:3, :3] += angle * numpy.outer(direction, normal)
@@ -698,7 +696,7 @@ def shear_from_matrix(matrix):
     w, V = numpy.linalg.eig(M33)
     i = numpy.where(abs(numpy.real(w) - 1.0) < 1e-4)[0]
     if len(i) < 2:
-        raise ValueError('no two linear independent eigenvectors found %s' % w)
+        raise ValueError("no two linear independent eigenvectors found %s" % w)
     V = numpy.real(V[:, i]).squeeze().T
     lenorm = -1.0
     for i0, i1 in ((0, 1), (0, 2), (1, 2)):
@@ -717,7 +715,7 @@ def shear_from_matrix(matrix):
     w, V = numpy.linalg.eig(M)
     i = numpy.where(abs(numpy.real(w) - 1.0) < 1e-8)[0]
     if not len(i):
-        raise ValueError('no eigenvector corresponding to eigenvalue 1')
+        raise ValueError("no eigenvector corresponding to eigenvalue 1")
     point = numpy.real(V[:, i[-1]]).squeeze()
     point /= point[3]
     return angle, direction, point, normal
@@ -756,12 +754,12 @@ def decompose_matrix(matrix):
     """
     M = numpy.array(matrix, dtype=numpy.float64, copy=True).T
     if abs(M[3, 3]) < _EPS:
-        raise ValueError('M[3, 3] is zero')
+        raise ValueError("M[3, 3] is zero")
     M /= M[3, 3]
     P = M.copy()
     P[:, 3] = 0.0, 0.0, 0.0, 1.0
     if not numpy.linalg.det(P):
-        raise ValueError('matrix is singular')
+        raise ValueError("matrix is singular")
 
     scale = numpy.zeros((3, ))
     shear = [0.0, 0.0, 0.0]
@@ -801,7 +799,7 @@ def decompose_matrix(matrix):
         angles[0] = math.atan2(row[1, 2], row[2, 2])
         angles[2] = math.atan2(row[0, 1], row[0, 0])
     else:
-        # angles[0] = math.atan2(row[1, 0], row[1, 1])
+        #angles[0] = math.atan2(row[1, 0], row[1, 1])
         angles[0] = math.atan2(-row[2, 1], row[1, 1])
         angles[2] = 0.0
 
@@ -934,7 +932,7 @@ def affine_matrix_from_points(v0, v1, shear=True, scale=True, usesvd=True):
 
     ndims = v0.shape[0]
     if ndims < 2 or v0.shape[1] < ndims or v0.shape != v1.shape:
-        raise ValueError('input arrays are of wrong shape or type')
+        raise ValueError("input arrays are of wrong shape or type")
 
     # move centroids to origin
     t0 = -numpy.mean(v0, axis=1)
@@ -1310,12 +1308,9 @@ def quaternion_from_matrix(matrix, isprecise=False):
     >>> q = quaternion_from_matrix(R)
     >>> is_same_transform(R, quaternion_matrix(q))
     True
-    >>> is_same_quaternion(quaternion_from_matrix(R, isprecise=False),
-    ...                    quaternion_from_matrix(R, isprecise=True))
-    True
     >>> R = euler_matrix(0.0, 0.0, numpy.pi/2.0)
-    >>> is_same_quaternion(quaternion_from_matrix(R, isprecise=False),
-    ...                    quaternion_from_matrix(R, isprecise=True))
+    >>> numpy.allclose(quaternion_from_matrix(R, isprecise=False),
+    ...                quaternion_from_matrix(R, isprecise=True))
     True
 
     """
@@ -1832,7 +1827,6 @@ def angle_between_vectors(v0, v1, directed=True, axis=0):
     v1 = numpy.array(v1, dtype=numpy.float64, copy=False)
     dot = numpy.sum(v0 * v1, axis=axis)
     dot /= vector_norm(v0, axis=axis) * vector_norm(v1, axis=axis)
-    dot = numpy.clip(dot, -1.0, 1.0)
     return numpy.arccos(dot if directed else numpy.fabs(dot))
 
 
@@ -1884,13 +1878,6 @@ def is_same_transform(matrix0, matrix1):
     return numpy.allclose(matrix0, matrix1)
 
 
-def is_same_quaternion(q0, q1):
-    """Return True if two quaternions are equal."""
-    q0 = numpy.array(q0)
-    q1 = numpy.array(q1)
-    return numpy.allclose(q0, q1) or numpy.allclose(q0, -q1)
-
-
 def _import_module(name, package=None, warn=True, prefix='_py_', ignore='_'):
     """Try import all public attributes from module into global namespace.
 
@@ -1909,7 +1896,7 @@ def _import_module(name, package=None, warn=True, prefix='_py_', ignore='_'):
             module = import_module('.' + name, package=package)
     except ImportError:
         if warn:
-            warnings.warn('failed to import module %s' % name)
+            warnings.warn("failed to import module %s" % name)
     else:
         for attr in dir(module):
             if ignore and attr.startswith(ignore):
@@ -1918,18 +1905,16 @@ def _import_module(name, package=None, warn=True, prefix='_py_', ignore='_'):
                 if attr in globals():
                     globals()[prefix + attr] = globals()[attr]
                 elif warn:
-                    warnings.warn('no Python implementation of ' + attr)
+                    warnings.warn("no Python implementation of " + attr)
             globals()[attr] = getattr(module, attr)
         return True
 
 
 _import_module('_transformations')
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import doctest
-    import random  # noqa: used in doctests
-    try:
-        numpy.set_printoptions(suppress=True, precision=5, legacy='1.13')
-    except TypeError:
-        numpy.set_printoptions(suppress=True, precision=5)
+    import random  # used in doctests
+    numpy.set_printoptions(suppress=True, precision=5)
     doctest.testmod()
+
