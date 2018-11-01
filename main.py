@@ -25,7 +25,7 @@ arm_color = (0.4, 0.4, 1, 1)  # light blue
 # D-H parameters
 theta1 = 0
 a1 = 0
-d1 = 0.1625 * 10
+d1 = 0.089159 * 10
 alpha1 = np.pi/2
 
 theta2 = 0
@@ -40,8 +40,8 @@ alpha3 = 0
 
 # other dimensions:  radius of the joints
 # width of the links, depth (in z-dimension) of the links
-radius = 0.1
-width = .6 * 1 * radius
+radius = 0.2
+width = .6 * 1 * radius *2
 depth = width
 # make cylinder slightly larger in depth
 # (distance along z-axis) so be better see it
@@ -50,20 +50,20 @@ depth_cylinder = 1.2 * width
 # create the vertices and faces for joint1 and link1
 # that will used below to create the cylinder and box in pyqtgraph
 vertices_joint1, faces_joint1 = cylinder(radius, depth_cylinder, N=40)
-vertices_arm1, faces_arm1 = box((d1, width, depth))
+vertices_arm1, faces_arm1 = box((width, -d1, depth))
 
 vertices_joint2, faces_joint2 = cylinder(radius, depth_cylinder, N=40)
-vertices_arm2, faces_arm2 = box((a2, width, depth))
+vertices_arm2, faces_arm2 = box((-a2, width, depth))
 
 vertices_joint3, faces_joint3 = cylinder(radius, depth_cylinder, N=40)
-vertices_arm3, faces_arm3 = box((a3, width, depth))
+vertices_arm3, faces_arm3 = box((-a3, width, depth))
 
 
 # create coordinate axes, also called frames.
 # frame0: the fixed world-frame
 frame0 = gl.GLAxisItem(antialias=True, glOptions='opaque')
 # we make the lines a bit thicker to stress this is the world-frame
-frame0.setGLOptions({'glLineWidth': (2,)})
+frame0.setGLOptions({'glLineWidth': (4,)})
 # frame1 is connected at joint1 and rotates relative to frame0
 frame1 = gl.GLAxisItem(antialias=True, glOptions='opaque')
 frame1.setParentItem(frame0)
@@ -118,27 +118,27 @@ arm3 = gl.GLMeshItem(vertexes=vertices_arm3, faces=faces_arm3,
 
 
 # we specify joint1 relative to frame1, so that it will rotate with frame1
-joint1.setParentItem(frame0)
+joint1.setParentItem(frame1)
 # we specify arm1 relative to frame1, so that it will rotate with frame1
-arm1.setParentItem(frame0)
+arm1.setParentItem(frame1)
 # lower the arm a bit, so that the y-axis is just at the middle of the arm
 arm1.translate(-width / 2, -width / 2, -width / 2)
 joint1.translate(0, 0, -width/2)
 
 # we specify joint1 relative to frame1, so that it will rotate with frame1
-joint2.setParentItem(frame1)
+joint2.setParentItem(frame2)
 # joint2.rotate(90, 1,0,0)
 # we specify arm1 relative to frame1, so that it will rotate with frame1
-arm2.setParentItem(frame1)
+arm2.setParentItem(frame2)
 # lower the arm a bit, so that the y-axis is just at the middle of the arm
 arm2.translate(-width / 2, -width / 2, -width / 2)
 joint2.translate(0, 0, -width/2)
 
 # we specify joint1 relative to frame1, so that it will rotate with frame1
-joint3.setParentItem(frame2)
+joint3.setParentItem(frame3)
 # joint3.rotate(90, 1,0,0)
 # we specify arm1 relative to frame1, so that it will rotate with frame1
-arm3.setParentItem(frame2)
+arm3.setParentItem(frame3)
 # lower the arm a bit, so that the y-axis is just at the middle of the arm
 arm3.translate(-width / 2, -width / 2, -width / 2)
 joint3.translate(0, 0, -width/2)
@@ -178,15 +178,7 @@ def update_window(trajectory):
     angles = kin_planar_inverse([a1, a2, a3], trajectory, False)
     print(np.degrees(angles))
 
-    R_0_1 = rotation_matrix(angles[0], [0, 0, 1])
-    R_1_2 = rotation_matrix(angles[1], [0, 1, 0])
-    R_2_3 = rotation_matrix(angles[2], [0, 1, 0])
-
-    print(R_1_2)
-
-    frame1.setTransform(R_0_1.flatten())
-    frame2.setTransform(R_1_2.flatten())
-    frame3.setTransform(R_2_3.flatten())
+    update_angles(angles)
 
     # now update the OpenGL graphics in window w.
     w.updateGL()
@@ -205,12 +197,11 @@ def update_angles(angles):
     # angles = kin_planar_inverse([a1, a2, a3], trajectory, False)
     print(np.degrees(angles))
 
-    theta1, theta2, theta3 = angles[0], angles[1], angles[2]
+    theta1, theta2, theta3 = -angles[0], -angles[1], -angles[2]
     R_0_1x = rotation_matrix(alpha1, [1, 0, 0])
     R_0_1z = rotation_matrix(theta1, [0, 0, 1])
     R_0_1_a = np.identity(4)
     R_0_1_a[0, 3] = a1
-
     R_0_1_d = np.identity(4)
     R_0_1_d[2, 3] = d1
     R_0_1 = np.dot(np.dot(np.dot(R_0_1z, R_0_1_d), R_0_1_a), R_0_1x)
@@ -219,7 +210,6 @@ def update_angles(angles):
     R_1_2z = rotation_matrix(theta2, [0, 0, 1])
     R_1_2_a = np.identity(4)
     R_1_2_a[0, 3] = a2
-
     R_1_2_d = np.identity(4)
     R_1_2_d[2, 3] = d2
     R_1_2 = np.dot(np.dot(np.dot(R_1_2z, R_1_2_d), R_1_2_a), R_1_2x)
@@ -228,7 +218,6 @@ def update_angles(angles):
     R_2_3z = rotation_matrix(theta3, [0, 0, 1])
     R_2_3_a = np.identity(4)
     R_2_3_a[0, 3] = a3
-
     R_2_3_d = np.identity(4)
     R_2_3_d[2, 3] = d3
     R_2_3 = np.dot(np.dot(np.dot(R_2_3z, R_2_3_d), R_2_3_a), R_2_3x)
