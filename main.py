@@ -235,3 +235,5 @@ def update_angles(angles):
 
     # next line not really necessary, but its neat to return something
     return True
+
+trajectory = [np.linspace(-5, 5), np.linspace(-5, 5), np.linspace(1, 6)]
