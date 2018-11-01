@@ -2,6 +2,7 @@ import pyqtgraph.opengl as gl
 import numpy as np
 from transformation_ian import rotation_matrix
 from pyqtgraph.Qt import QtCore, QtGui
+import math
 
 from rm_utils import *
 
@@ -167,7 +168,7 @@ trajectory = np.array([
 arms = np.array([d1, a2, a3])
 
 # define the window updating function
-def update_window(trajectory):
+def update_point(trajectory):
     # we need access to variables in the main-program, so make
     # them accessable by making them global within this function
     global w, frame1, arms
@@ -226,14 +227,39 @@ def update_angles(angles):
     frame2.setTransform(R_1_2.flatten())
     frame3.setTransform(R_2_3.flatten())
 
-    print(R_0_1)
-    print(R_1_2)
-    print(R_2_3)
-    print(np.dot(np.dot(R_0_1, R_1_2), R_2_3))
+    # print(R_0_1)
+    # print(R_1_2)
+    # print(R_2_3)
+    # print(np.dot(np.dot(R_0_1, R_1_2), R_2_3))
     # now update the OpenGL graphics in window w.
     w.updateGL()
 
     # next line not really necessary, but its neat to return something
     return True
 
-trajectory = [np.linspace(-5, 5), np.linspace(-5, 5), np.linspace(1, 6)]
+def update_window():
+    global w, i, tr, N
+    update_point(tr[i])
+    i = i + 1
+    if i == N: i = 0
+
+
+def PointsInCircum(r,n=100):
+    return [[math.cos(2*np.pi/n*x)*r,math.sin(2*np.pi/n*x)*r, 0] for x in range(0,n+1)]
+
+
+N = 200
+tr = PointsInCircum(3, N)
+h1 = np.linspace(0, 3, int(N/2))
+h2 = np.linspace(3, 0, int(N/2))
+h = np.append(h1, h2)
+for ii in range(0, N):
+    tr[ii][2] = h[ii]
+
+
+i = 0
+timer = QtCore.QTimer()
+timer.timeout.connect(update_window)
+timer.start(100)
+
+

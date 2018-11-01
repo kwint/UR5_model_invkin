@@ -56,7 +56,7 @@ def kin_planar_inverse(arms, point, elbow_down=True):
     # theta[2] = np.pi + np.arccos((-c**2+d3**2+d2**2)/(-2*d3*d2))
 
     D = (r ** 2 + s ** 2 - d2 ** 2 - d3 ** 2) / (2 * d2 * d3)
-    theta[2] = np.arccos(D)
+    theta[2] = -np.arccos(D)
     theta[1] = np.arctan2(s, r) - np.arctan((d3 * np.sin(theta[2]) / (d2+d3*np.cos(theta[2]))))
     return theta
 
