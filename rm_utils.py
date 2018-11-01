@@ -2,7 +2,7 @@
 # Rufus Fraanje (p.r.fraanje@hhs.nl), sept. 2016
 
 ###############################################################################
-def kin_planar_forward(arms,angles):
+def kin_planar_forward(arms, angles):
     """Forward kinematics of a 2-link planar robot.
     
     Inputs:
@@ -14,16 +14,17 @@ def kin_planar_forward(arms,angles):
 
     """
     import numpy as np
-    x1 = arms[0]*np.cos(angles[0]) 
-    y1 = arms[0]*np.sin(angles[0]) 
+    x1 = arms[0] * np.cos(angles[0])
+    y1 = arms[0] * np.sin(angles[0])
     # adjust this
     x2 = x1 + 0
     y2 = y1 + 0
-    #point1 = np.array([x1,y1])
-    point2 = np.array([x2,y2])
+    # point1 = np.array([x1,y1])
+    point2 = np.array([x2, y2])
     return point2
 
-def kin_planar_inverse(arms,point,elbow_down=True):
+
+def kin_planar_inverse(arms, point, elbow_down=True):
     """Inverse kinematics of a 2-link planar robot.
     
     Inputs:
@@ -45,22 +46,27 @@ def kin_planar_inverse(arms,point,elbow_down=True):
 
     r = (x**2 + y**2)**0.5
     s = z - d1
-    c = (r**2 + s**2)**0.5
-    D = (r**2 + s**2 - d2**2 - d3**2) / (2*d2*d3)
+    # c = (r**2 + s**2)*1*0.5
+    # D = (r**2 + s**2 - d2**2 - d3**2) / (2*d2*d3)
+    #
+    # # theta[1] = np.arctan2(s, r) - np.arctan2(d3*s, d2+d3*s)
+    # # theta[2] = np.arctan2(-(1-D**2)**0.5, D)
+    #
+    # theta[1] = np.arctan2(s, r) - np.arccos((-d3**2+d2**2+c**2)/(-2*d3*d2))
+    # theta[2] = np.pi + np.arccos((-c**2+d3**2+d2**2)/(-2*d3*d2))
 
-    # theta[1] = np.arctan2(s, r) - np.arctan2(d3*s, d2+d3*s)
-    # theta[2] = np.arctan2(-(1-D**2)**0.5, D)
-
-    theta[1] = np.arctan2(s, r) + np.arccos((-d3**2+d2**2+c**2)/(-2*d3*d2))
-    theta[2] = np.pi - np.arccos((-c**2+d3**2+d2**2)/(-2*d3*d2))
+    D = (r ** 2 + s ** 2 - d2 ** 2 - d3 ** 2) / (2 * d2 * d3)
+    theta[2] = np.arccos(D)
+    theta[1] = np.arctan2(s, r) - np.arctan((d3 * np.sin(theta[2]) / (d2+d3*np.cos(theta[2]))))
     return theta
+
 
 # cylinder is a convenience function to create a cylinder shape in
 # pyqtgraph/OpenGL, it gives you a number of vertices distributed over the
 # surface of the cylinder and triangular shaped faces that cover the whole
 # surface of the cylinder
 # cylinders are being used to visualize joints
-def cylinder(radius,height,N):
+def cylinder(radius, height, N):
     """Calculates vertices and faces for a cylinder for visualisation in
     pyqtgraph/OpenGL.
 
@@ -80,29 +86,31 @@ def cylinder(radius,height,N):
     """
     import numpy as np
     import scipy.spatial
-    t = np.linspace(0,2*np.pi,N,endpoint=False).reshape(N,1)
-    vertices = np.zeros((2*N,3))
-    vertices[0:N,:] = np.hstack((radius*np.cos(t),radius*np.sin(t),np.zeros((N,1))))
-    vertices[N:2*N,:] = vertices[0:N,:] + np.hstack((np.zeros((N,2)),height*np.ones((N,1))))
-    faces = np.zeros((N-2+2*N+N-2,3),dtype=np.uint)
+    t = np.linspace(0, 2 * np.pi, N, endpoint=False).reshape(N, 1)
+    vertices = np.zeros((2 * N, 3))
+    vertices[0:N, :] = np.hstack((radius * np.cos(t), radius * np.sin(t), np.zeros((N, 1))))
+    vertices[N:2 * N, :] = vertices[0:N, :] + np.hstack((np.zeros((N, 2)), height * np.ones((N, 1))))
+    faces = np.zeros((N - 2 + 2 * N + N - 2, 3), dtype=np.uint)
     # bottom, makes use of Delaunay triangulation contained in Scipy's
     # submodule spatial (which on its turn makes use of the Qhull library)
-    faces[0:N-2,:] = scipy.spatial.Delaunay(vertices[0:N,0:2],furthest_site=True,qhull_options='QJ').simplices[:,-1::-1]
-    #sides
-    for i in range(N-1):
-        faces[N-2+2*i,:]   = np.array([i,i+1,N+i+1],dtype=np.uint)
-        faces[N-2+2*i+1,:] = np.array([i,N+i+1,N+i],dtype=np.uint)
+    faces[0:N - 2, :] = scipy.spatial.Delaunay(vertices[0:N, 0:2], furthest_site=True, qhull_options='QJ').simplices[:,
+                        -1::-1]
+    # sides
+    for i in range(N - 1):
+        faces[N - 2 + 2 * i, :] = np.array([i, i + 1, N + i + 1], dtype=np.uint)
+        faces[N - 2 + 2 * i + 1, :] = np.array([i, N + i + 1, N + i], dtype=np.uint)
     # final one between the last and the first:
-    faces[N-2+2*(N-1),:]   = np.array([N-1,0,N],dtype=np.uint)
-    faces[N-2+2*(N-1)+1,:] = np.array([N-1,N,2*N-1],dtype=np.uint)
+    faces[N - 2 + 2 * (N - 1), :] = np.array([N - 1, 0, N], dtype=np.uint)
+    faces[N - 2 + 2 * (N - 1) + 1, :] = np.array([N - 1, N, 2 * N - 1], dtype=np.uint)
     # top
-    faces[N-2+2*N:N-2+2*N+N-2,:] = N + faces[0:N-2,-1::-1]
+    faces[N - 2 + 2 * N:N - 2 + 2 * N + N - 2, :] = N + faces[0:N - 2, -1::-1]
 
-    return vertices,faces
+    return vertices, faces
+
 
 # simular to the cylinder, but not for creating a box-shaped object
 # boxes are used to visualize links
-def box(size=(1,1,1)):
+def box(size=(1, 1, 1)):
     """Calculates vertices and faces for a box for visualisation in
     pyqtgraph/OpenGL.
 
@@ -122,19 +130,19 @@ def box(size=(1,1,1)):
 
     """
     import numpy as np
-    vertices = np.zeros((8,3))
-    faces = np.zeros((12,3),dtype=np.uint)
+    vertices = np.zeros((8, 3))
+    faces = np.zeros((12, 3), dtype=np.uint)
     xdim = size[0]
     ydim = size[1]
     zdim = size[2]
-    vertices[0,:] = np.array([0,ydim,0])
-    vertices[1,:] = np.array([xdim,ydim,0])
-    vertices[2,:] = np.array([xdim,0,0])
-    vertices[3,:] = np.array([0,0,0])
-    vertices[4,:] = np.array([0,ydim,zdim])
-    vertices[5,:] = np.array([xdim,ydim,zdim])
-    vertices[6,:] = np.array([xdim,0,zdim])
-    vertices[7,:] = np.array([0,0,zdim])
+    vertices[0, :] = np.array([0, ydim, 0])
+    vertices[1, :] = np.array([xdim, ydim, 0])
+    vertices[2, :] = np.array([xdim, 0, 0])
+    vertices[3, :] = np.array([0, 0, 0])
+    vertices[4, :] = np.array([0, ydim, zdim])
+    vertices[5, :] = np.array([xdim, ydim, zdim])
+    vertices[6, :] = np.array([xdim, 0, zdim])
+    vertices[7, :] = np.array([0, 0, zdim])
 
     faces = np.array([
         # bottom (clockwise, while looking from top)
@@ -152,9 +160,10 @@ def box(size=(1,1,1)):
         # top (counter-clockwise)
         [4, 5, 6],
         [4, 6, 7]
-        ],dtype=np.uint)
+    ], dtype=np.uint)
 
-    return vertices,faces
+    return vertices, faces
+
 
 def circle_fit(points):
     """Calculate the circle through three points.
@@ -171,34 +180,36 @@ def circle_fit(points):
 
     """
     import numpy as np
-    plane = np.vstack((points[1:2,:]-points[0:1,:],points[2:3,:]-points[0:1,:])).T
-    q,r = np.linalg.qr(plane,mode='complete')
-    if np.allclose(r[1,1],0):  # all points are on a line
+    plane = np.vstack((points[1:2, :] - points[0:1, :], points[2:3, :] - points[0:1, :])).T
+    q, r = np.linalg.qr(plane, mode='complete')
+    if np.allclose(r[1, 1], 0):  # all points are on a line
         radius = np.inf
         pcenter = None
-        vperp =  None
+        vperp = None
         angles = None
     else:
         # make diagonal of r to be positive
         signs_r = np.diag(np.diag(np.sign(r)))
-        q[:,0:2] = np.dot(q[:,0:2],signs_r)
-        if np.linalg.det(q)<0: q[:,2] *= -1 #= -q[:,2]
-        r[0:2,:] = np.dot(signs_r,r[0:2,:])
+        q[:, 0:2] = np.dot(q[:, 0:2], signs_r)
+        if np.linalg.det(q) < 0: q[:, 2] *= -1  # = -q[:,2]
+        r[0:2, :] = np.dot(signs_r, r[0:2, :])
 
-        vperp = q[:,2]
-        alpha = .5 * r[0,0] 
-        
-        if np.allclose(r[0,0],r[0,1]): # four points make a straight angle
-            beta = .5 * r[1,1]
+        vperp = q[:, 2]
+        alpha = .5 * r[0, 0]
+
+        if np.allclose(r[0, 0], r[0, 1]):  # four points make a straight angle
+            beta = .5 * r[1, 1]
         else:
-            beta = ( r[0,1]*(r[0,1]-r[0,0])+r[1,1]**2 ) / (2 * r[1,1])
+            beta = (r[0, 1] * (r[0, 1] - r[0, 0]) + r[1, 1] ** 2) / (2 * r[1, 1])
 
-        pcenter = points[0,:] + alpha * q[:,0] + beta * q[:,1]
-        radius = np.sqrt(alpha**2 + beta**2)
-        angles = np.array([2*np.arctan2(beta,alpha),2*np.arcsin(.5*np.sqrt((r[0,1]-r[0,0])**2+r[1,1]**2)/radius)])
+        pcenter = points[0, :] + alpha * q[:, 0] + beta * q[:, 1]
+        radius = np.sqrt(alpha ** 2 + beta ** 2)
+        angles = np.array([2 * np.arctan2(beta, alpha),
+                           2 * np.arcsin(.5 * np.sqrt((r[0, 1] - r[0, 0]) ** 2 + r[1, 1] ** 2) / radius)])
     return radius, pcenter, vperp, angles
 
-def rotation_between_two_vectors(a,b):
+
+def rotation_between_two_vectors(a, b):
     """Return the rotation matrix (3x3 ndarray) to rotate a in the direction of b.
         
         Inputs:
@@ -212,19 +223,20 @@ def rotation_between_two_vectors(a,b):
 
     # algorithm obtained from:
     # http://math.stackexchange.com/questions/180418/calculate-rotation-matrix-to-align-vector-a-to-vector-b-in-3d
-    an = b/np.linalg.norm(a)
-    bn = a/np.linalg.norm(b)
+    an = b / np.linalg.norm(a)
+    bn = a / np.linalg.norm(b)
     # rotation axis
-    v = np.cross(bn,an)
+    v = np.cross(bn, an)
     # sine of angle
     s = np.linalg.norm(v)
     # cosine of angle
-    c = np.inner(bn,an)
-    Vskew = np.array([[0,-v[2],v[1]],[v[2],0,-v[0]],[-v[1],v[0],0]])
-    R = np.eye(3)+Vskew+np.dot(Vskew,Vskew)*(1-c)/s**2
+    c = np.inner(bn, an)
+    Vskew = np.array([[0, -v[2], v[1]], [v[2], 0, -v[0]], [-v[1], v[0], 0]])
+    R = np.eye(3) + Vskew + np.dot(Vskew, Vskew) * (1 - c) / s ** 2
     return R
 
-def extrude(polygon,curve,twist=None,calc_faces=False):
+
+def extrude(polygon, curve, twist=None, calc_faces=False):
     """Extrude a polygon along a curve with an optional twist.
 
         Inputs:
@@ -265,139 +277,150 @@ def extrude(polygon,curve,twist=None,calc_faces=False):
 
     # N is number of points in the (3D) curve
     N = curve.shape[0]
-    if not(twist is None):
+    if not (twist is None):
         # check if twist is a scalar or an array
-        if not(hasattr(twist,"__len__")):
-            twist = twist/(N-1)*np.ones(N)
+        if not (hasattr(twist, "__len__")):
+            twist = twist / (N - 1) * np.ones(N)
             twist[0] = 0.
         else:
-            twist = np.hstack((0,np.diff(twist)))
+            twist = np.hstack((0, np.diff(twist)))
 
     # num_p is the number of vertices in the (2D) polygon
     num_p = polygon.shape[0]
     # determine the direction of the first segment of the curve
-    difference = curve[1,:] - curve[0,:]
+    difference = curve[1, :] - curve[0, :]
     # the rotation matrix is used to rotate the polygon such that it 
     # will be perpedicular to the curve  (changed to [0,0,-1.], to get shading
     # right, has to check this!)
-    R = rotation_between_two_vectors(np.array([0,0,-1.]),difference)
-    vertices = np.zeros((N*num_p,3))
-    vertices[0:num_p,0:2] = polygon
+    R = rotation_between_two_vectors(np.array([0, 0, -1.]), difference)
+    vertices = np.zeros((N * num_p, 3))
+    vertices[0:num_p, 0:2] = polygon
     # rotate and shift the polygon
-    vertices[0:num_p,:] = np.dot(vertices[0:num_p,:],R.T) + np.dot(np.ones((num_p,1)),curve[0:1,:])
+    vertices[0:num_p, :] = np.dot(vertices[0:num_p, :], R.T) + np.dot(np.ones((num_p, 1)), curve[0:1, :])
     # second step is just shifting in the direction of the curve (i.e. 'difference')
-    vertices[num_p:2*num_p,:] = vertices[0:num_p,:] + np.dot(np.ones((num_p,1)),difference.reshape(1,3))
+    vertices[num_p:2 * num_p, :] = vertices[0:num_p, :] + np.dot(np.ones((num_p, 1)), difference.reshape(1, 3))
     # apply twist rotation if needed:
-    if not(twist is None):
+    if not (twist is None):
         # take care rotation_matrix gives a homogeneous transformation
-        Rtwist = rotation_matrix(twist[1],difference,curve[1,:])
-        vertices[num_p:2*num_p,:] = np.dot(np.hstack((vertices[num_p:2*num_p,:],np.ones((num_p,1)))),Rtwist.T)[:,0:3]
+        Rtwist = rotation_matrix(twist[1], difference, curve[1, :])
+        vertices[num_p:2 * num_p, :] = np.dot(np.hstack((vertices[num_p:2 * num_p, :], np.ones((num_p, 1)))), Rtwist.T)[
+                                       :, 0:3]
     # determine the vertices by extruding along the curve
-    for i in range(2,N):
+    for i in range(2, N):
         # determine curvature of the curve by fitting a circle
-        radius,pcenter,vperp,angles = circle_fit(curve[i-2:i+1,:])
+        radius, pcenter, vperp, angles = circle_fit(curve[i - 2:i + 1, :])
         # determine direction
-        difference = curve[i,:] - curve[i-1,:]
-        if np.allclose(radius,np.inf): # 3 points on 1 line
-            vertices[i*num_p:(i+1)*num_p,:] = vertices[(i-1)*num_p:i*num_p,:] + np.dot(np.ones((num_p,1)),difference.reshape(1,3))
+        difference = curve[i, :] - curve[i - 1, :]
+        if np.allclose(radius, np.inf):  # 3 points on 1 line
+            vertices[i * num_p:(i + 1) * num_p, :] = vertices[(i - 1) * num_p:i * num_p, :] + np.dot(
+                np.ones((num_p, 1)), difference.reshape(1, 3))
         else:
             # take care rotation_matrix gives a homogeneous transformation
-            R = rotation_matrix(angles[1],vperp,pcenter)
-            vertices[i*num_p:(i+1)*num_p,:] = np.dot(np.hstack((vertices[(i-1)*num_p:i*num_p,:],np.ones((num_p,1)))),R.T)[:,0:3]
+            R = rotation_matrix(angles[1], vperp, pcenter)
+            vertices[i * num_p:(i + 1) * num_p, :] = np.dot(
+                np.hstack((vertices[(i - 1) * num_p:i * num_p, :], np.ones((num_p, 1)))), R.T)[:, 0:3]
         # determine and apply twist if necessary
-        if not(twist is None):
+        if not (twist is None):
             # take care rotation_matrix gives a homogeneous transformation
-            Rtwist = rotation_matrix(twist[i],difference,curve[i,:])
-            vertices[i*num_p:(i+1)*num_p,:] = np.dot(np.hstack((vertices[i*num_p:(i+1)*num_p,:],np.ones((num_p,1)))),Rtwist.T)[:,0:3]
+            Rtwist = rotation_matrix(twist[i], difference, curve[i, :])
+            vertices[i * num_p:(i + 1) * num_p, :] = np.dot(
+                np.hstack((vertices[i * num_p:(i + 1) * num_p, :], np.ones((num_p, 1)))), Rtwist.T)[:, 0:3]
 
     # if selected, determine the indices of the faces (looking at a conter clock-wise
     # oriented face means that you are looking at a front-side, so looking from
     # the outside all faces are specified in counter clock-wise orientation) 
     if calc_faces:
         # initialize faces (botom, sides and top):
-        faces = np.zeros(((num_p-2) + 2*num_p*N + (num_p-2),3),dtype=np.uint)
+        faces = np.zeros(((num_p - 2) + 2 * num_p * N + (num_p - 2), 3), dtype=np.uint)
         # bottom (walk clockwise through points, because bottom is outside)
-        #faces[0:num_p-2,:] = scipy.spatial.Delaunay(polygon[-1::-1,:],furthest_site=True,
-        faces[0:num_p-2,:] = scipy.spatial.Delaunay(polygon,furthest_site=True,
-                qhull_options='QJ').simplices[:,-1::-1]
+        # faces[0:num_p-2,:] = scipy.spatial.Delaunay(polygon[-1::-1,:],furthest_site=True,
+        faces[0:num_p - 2, :] = scipy.spatial.Delaunay(polygon, furthest_site=True,
+                                                       qhull_options='QJ').simplices[:, -1::-1]
 
         # sides
-        for i in range(N-1): # loop over all levels
-            for j in range(num_p-1): # loop over all vertices at a level
-                faces[num_p-2+i*2*num_p+2*j,:]   = np.array([i*num_p+j,i*num_p+j+1,(i+1)*num_p+j+1],dtype=np.uint)
-                faces[num_p-2+i*2*num_p+2*j+1,:] = np.array([i*num_p+j,(i+1)*num_p+j+1,(i+1)*num_p+j],dtype=np.uint)
+        for i in range(N - 1):  # loop over all levels
+            for j in range(num_p - 1):  # loop over all vertices at a level
+                faces[num_p - 2 + i * 2 * num_p + 2 * j, :] = np.array(
+                    [i * num_p + j, i * num_p + j + 1, (i + 1) * num_p + j + 1], dtype=np.uint)
+                faces[num_p - 2 + i * 2 * num_p + 2 * j + 1, :] = np.array(
+                    [i * num_p + j, (i + 1) * num_p + j + 1, (i + 1) * num_p + j], dtype=np.uint)
             # close the ring between the last and the first vertices at a level 
-            faces[num_p-2+i*2*num_p+2*(num_p-1),:]   = np.array([i*num_p+num_p-1,i*num_p,(i+1)*num_p],dtype=np.uint)
-            faces[num_p-2+i*2*num_p+2*(num_p-1)+1,:] = np.array([i*num_p+num_p-1,(i+1)*num_p,(i+1)*num_p+num_p-1],dtype=np.uint)
+            faces[num_p - 2 + i * 2 * num_p + 2 * (num_p - 1), :] = np.array(
+                [i * num_p + num_p - 1, i * num_p, (i + 1) * num_p], dtype=np.uint)
+            faces[num_p - 2 + i * 2 * num_p + 2 * (num_p - 1) + 1, :] = np.array(
+                [i * num_p + num_p - 1, (i + 1) * num_p, (i + 1) * num_p + num_p - 1], dtype=np.uint)
 
         # top
         # just reverse the ones from the bottom but at (N-1)*num_p higher vertex numbers
-        faces[-num_p+2::,:] = (N-1)*num_p + faces[0:num_p-2,-1::-1]
+        faces[-num_p + 2::, :] = (N - 1) * num_p + faces[0:num_p - 2, -1::-1]
 
         return vertices, faces
     else:
         return vertices
 
-# to do: write documentation
-def sigmoid_interp(start,stop,alpha,N):
-    import numpy as np
-    return start + (stop-start)/(1+np.exp(-alpha*np.linspace(-1,1,N)))
 
-def rounded_rectangle_polygon(xdim,ydim,N,percentage=0):
+# to do: write documentation
+def sigmoid_interp(start, stop, alpha, N):
     import numpy as np
-    polygon = np.zeros((N,2))
-    radius = .5 * min(xdim,ydim)  * percentage
+    return start + (stop - start) / (1 + np.exp(-alpha * np.linspace(-1, 1, N)))
+
+
+def rounded_rectangle_polygon(xdim, ydim, N, percentage=0):
+    import numpy as np
+    polygon = np.zeros((N, 2))
+    radius = .5 * min(xdim, ydim) * percentage
     # circumference = 2*(xdim + ydim) + (2*np.pi-8)*radius
 
-    t = np.linspace(0,2*np.pi,N).reshape(N,1)
-    N1 = np.int(N/4)
-    N2 = np.int(N/2)
-    N3 = np.int(3*N/4)
+    t = np.linspace(0, 2 * np.pi, N).reshape(N, 1)
+    N1 = np.int(N / 4)
+    N2 = np.int(N / 2)
+    N3 = np.int(3 * N / 4)
     N4 = N
-    part1 = np.hstack(( (xdim/2-radius)+radius*np.cos(t[0:N1]), (ydim/2-radius)+radius*np.sin(t[0:N1])))
-    part2 = np.hstack(( (-xdim/2+radius)+radius*np.cos(t[N1:N2]), (ydim/2-radius)+radius*np.sin(t[N1:N2])))
-    part3 = np.hstack(( (-xdim/2+radius)+radius*np.cos(t[N2:N3]), (-ydim/2+radius)+radius*np.sin(t[N2:N3])))
-    part4 = np.hstack(( (xdim/2-radius)+radius*np.cos(t[N3:N4]), (-ydim/2+radius)+radius*np.sin(t[N3:N4])))
+    part1 = np.hstack(((xdim / 2 - radius) + radius * np.cos(t[0:N1]), (ydim / 2 - radius) + radius * np.sin(t[0:N1])))
+    part2 = np.hstack(
+        ((-xdim / 2 + radius) + radius * np.cos(t[N1:N2]), (ydim / 2 - radius) + radius * np.sin(t[N1:N2])))
+    part3 = np.hstack(
+        ((-xdim / 2 + radius) + radius * np.cos(t[N2:N3]), (-ydim / 2 + radius) + radius * np.sin(t[N2:N3])))
+    part4 = np.hstack(
+        ((xdim / 2 - radius) + radius * np.cos(t[N3:N4]), (-ydim / 2 + radius) + radius * np.sin(t[N3:N4])))
 
-    polygon = np.vstack((part1,part2,part3,part4))
+    polygon = np.vstack((part1, part2, part3, part4))
 
     return polygon
 
 
-def link(alpha=0,a=1,theta=0,d=0,joint_a_radius=.7,joint_a_height=.5,joint_b_radius=.7,joint_b_height=.5,link_width=.5,link_height=0.1,Na=40,Nb=40,Nlink=30,Nround=16,calc_faces=False):
+def link(alpha=0, a=1, theta=0, d=0, joint_a_radius=.7, joint_a_height=.5, joint_b_radius=.7, joint_b_height=.5,
+         link_width=.5, link_height=0.1, Na=40, Nb=40, Nlink=30, Nround=16, calc_faces=False):
     import numpy as np
     from transformations import rotation_matrix
 
-    vertices_joint_a,faces_joint_a = cylinder(joint_a_radius,joint_a_height,Na)
-    vertices_joint_b,faces_joint_b = cylinder(joint_b_radius,joint_b_height,Nb)
-    vertices_joint_b[:,2] -= joint_b_height
+    vertices_joint_a, faces_joint_a = cylinder(joint_a_radius, joint_a_height, Na)
+    vertices_joint_b, faces_joint_b = cylinder(joint_b_radius, joint_b_height, Nb)
+    vertices_joint_b[:, 2] -= joint_b_height
     # transform points of joint_b to end of link
     Htrans_z = np.eye(4)
-    Htrans_z[2,3] = d
+    Htrans_z[2, 3] = d
     Htrans_x = np.eye(4)
-    Htrans_x[0,3] = a
-    Hrot_z = rotation_matrix(theta,[0,0,1]) 
-    Hrot_x = rotation_matrix(alpha,[1,0,0]) 
-    H = np.dot(Hrot_z,np.dot(Htrans_z,np.dot(Htrans_x,Hrot_x)))
-    vertices_joint_b = np.dot(np.hstack((vertices_joint_b,np.ones((vertices_joint_b.shape[0],1)))),H.T)[:,0:3]
-
+    Htrans_x[0, 3] = a
+    Hrot_z = rotation_matrix(theta, [0, 0, 1])
+    Hrot_x = rotation_matrix(alpha, [1, 0, 0])
+    H = np.dot(Hrot_z, np.dot(Htrans_z, np.dot(Htrans_x, Hrot_x)))
+    vertices_joint_b = np.dot(np.hstack((vertices_joint_b, np.ones((vertices_joint_b.shape[0], 1)))), H.T)[:, 0:3]
 
     curve_link = np.vstack(
-            (np.array([[0,0,.5*joint_a_height],[.5*joint_a_radius,0,0.5*joint_a_height]]),
-        np.hstack((np.linspace(joint_a_radius,a,Nlink).reshape(Nlink,1),np.zeros((Nlink,1)),
-        sigmoid_interp(.5*joint_a_height,d-.5*joint_b_height,7,Nlink).reshape(Nlink,1)))))
+        (np.array([[0, 0, .5 * joint_a_height], [.5 * joint_a_radius, 0, 0.5 * joint_a_height]]),
+         np.hstack((np.linspace(joint_a_radius, a, Nlink).reshape(Nlink, 1), np.zeros((Nlink, 1)),
+                    sigmoid_interp(.5 * joint_a_height, d - .5 * joint_b_height, 7, Nlink).reshape(Nlink, 1)))))
 
-    polygon_link = rounded_rectangle_polygon(link_height,link_width,Nround,percentage=0.3)
-    
+    polygon_link = rounded_rectangle_polygon(link_height, link_width, Nround, percentage=0.3)
+
     if calc_faces:
-        vertices_link,faces_link = extrude(polygon_link,curve_link,alpha,calc_faces=True)
-        if not(theta is 0):
-            vertices_link = np.dot(np.hstack((vertices_link,np.ones((vertices_link.shape[0],1)))),Hrot_z.T)[:,0:3]
-        return vertices_link,faces_link,vertices_joint_a,faces_joint_a,vertices_joint_b,faces_joint_b,H
+        vertices_link, faces_link = extrude(polygon_link, curve_link, alpha, calc_faces=True)
+        if not (theta is 0):
+            vertices_link = np.dot(np.hstack((vertices_link, np.ones((vertices_link.shape[0], 1)))), Hrot_z.T)[:, 0:3]
+        return vertices_link, faces_link, vertices_joint_a, faces_joint_a, vertices_joint_b, faces_joint_b, H
     else:
-        if not(theta is 0):
-            vertices_link = np.dot(np.hstack((vertices_link,np.ones((vertices_link.shape[0],1)))),Hrot_z.T)[:,0:3]
-        vertices_link = extrude(polygon_link,curve_link,alpha,calc_faces=False)
-        return vertices_link,vertices_joint_a,vertices_joint_b,H
-
-    
+        if not (theta is 0):
+            vertices_link = np.dot(np.hstack((vertices_link, np.ones((vertices_link.shape[0], 1)))), Hrot_z.T)[:, 0:3]
+        vertices_link = extrude(polygon_link, curve_link, alpha, calc_faces=False)
+        return vertices_link, vertices_joint_a, vertices_joint_b, H
