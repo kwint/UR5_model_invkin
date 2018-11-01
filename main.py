@@ -164,7 +164,7 @@ w.addItem(arm3)
 trajectory = np.array([
     [3, 3, 3],
 ])
-arms = np.array([a1, a2, a3])
+arms = np.array([d1, a2, a3])
 
 # define the window updating function
 def update_window(trajectory):
@@ -175,7 +175,7 @@ def update_window(trajectory):
     # 'inverse kinematics' of a 1-link planar robot:
     # angles1 = np.arctan2(trajectory[i, 1], trajectory[i, 0])
 
-    angles = kin_planar_inverse([a1, a2, a3], trajectory, False)
+    angles = kin_planar_inverse([d1, a2, a3], trajectory, False)
     print(np.degrees(angles))
 
     update_angles(angles)
