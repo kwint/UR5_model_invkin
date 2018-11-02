@@ -3,25 +3,8 @@
 
 ###############################################################################
 def kin_planar_forward(arms, angles):
-    """Forward kinematics of a 2-link planar robot.
-    
-    Inputs:
-        arms: 2-element array/list with arm lengths
-        angles: 2-element array/list with angles in radians(!)
-
-    Output:
-        point2: 2-element numpy array with (x,y) coordinate of end point
-
-    """
-    import numpy as np
-    x1 = arms[0] * np.cos(angles[0])
-    y1 = arms[0] * np.sin(angles[0])
-    # adjust this
-    x2 = x1 + 0
-    y2 = y1 + 0
-    # point1 = np.array([x1,y1])
-    point2 = np.array([x2, y2])
-    return point2
+    ## See function Update_angles in main.py for kinematics
+    return False
 
 
 def kin_planar_inverse(arms, point, elbow_down=True):
@@ -40,23 +23,22 @@ def kin_planar_inverse(arms, point, elbow_down=True):
     import numpy as np
     x, y, z = point[0], point[1], point[2]
     d1, d2, d3 = arms[0], arms[1], arms[2]
-
     theta = [0, 0, 0]
+
+    # Theta 1 is arctan(y/x)
     theta[0] = np.arctan2(y, x)
 
+    # R is shortest distance to point from link 2
     r = (x**2 + y**2)**0.5
-    s = z - d1
-    # c = (r**2 + s**2)*1*0.5
-    # D = (r**2 + s**2 - d2**2 - d3**2) / (2*d2*d3)
-    #
-    # # theta[1] = np.arctan2(s, r) - np.arctan2(d3*s, d2+d3*s)
-    # # theta[2] = np.arctan2(-(1-D**2)**0.5, D)
-    #
-    # theta[1] = np.arctan2(s, r) - np.arccos((-d3**2+d2**2+c**2)/(-2*d3*d2))
-    # theta[2] = np.pi + np.arccos((-c**2+d3**2+d2**2)/(-2*d3*d2))
 
+    # S is the height that link 2 and 3 have to adjust to
+    s = z - d1
+
+    # Calc Thata 3 with cosin rule
     D = (r ** 2 + s ** 2 - d2 ** 2 - d3 ** 2) / (2 * d2 * d3)
     theta[2] = -np.arccos(D)
+
+    # Calc theta 2 with theta 3 and cosin rule
     theta[1] = np.arctan2(s, r) - np.arctan((d3 * np.sin(theta[2]) / (d2+d3*np.cos(theta[2]))))
     return theta
 
@@ -273,7 +255,7 @@ def extrude(polygon, curve, twist=None, calc_faces=False):
     """
     import numpy as np
     import scipy.spatial
-    from transformations import rotation_matrix
+    from transformation_fix_y import rotation_matrix
 
     # N is number of points in the (3D) curve
     N = curve.shape[0]
@@ -392,7 +374,7 @@ def rounded_rectangle_polygon(xdim, ydim, N, percentage=0):
 def link(alpha=0, a=1, theta=0, d=0, joint_a_radius=.7, joint_a_height=.5, joint_b_radius=.7, joint_b_height=.5,
          link_width=.5, link_height=0.1, Na=40, Nb=40, Nlink=30, Nround=16, calc_faces=False):
     import numpy as np
-    from transformations import rotation_matrix
+    from transformation_fix_y import rotation_matrix
 
     vertices_joint_a, faces_joint_a = cylinder(joint_a_radius, joint_a_height, Na)
     vertices_joint_b, faces_joint_b = cylinder(joint_b_radius, joint_b_height, Nb)
